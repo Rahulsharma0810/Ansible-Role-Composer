@@ -1,0 +1,10 @@
+# <!--==============================================
+# =            Composer User Based ROLE            =
+# ===============================================-->
+# Install composer for below user
+composer_user: admin
+
+### Install Laravel for user
+Install_Laravel: true
+
+# <!--====  End of Composer User Based ROLE  ====-->

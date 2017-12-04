@@ -1,0 +1,61 @@
+- block:
+  - file:
+     path: ~/.Tools/Composer/
+     state: directory
+     mode: 0755
+
+  - name: DOWNLOAD COMPOSER INSTALLER
+    get_url:
+      url: "https://getcomposer.org/installer"
+      dest: "~/composer-setup.php"
+    tags: admin.composer
+
+  - name: INSTALL COMPOSER WITH INSTALLER
+    shell: |
+     php ~/composer-setup.php --install-dir=.Tools/Composer/ --filename=composer
+    args:
+      creates: "~/.Tools/Composer/composer"
+    tags: admin.composer
+
+  - name: MAKE COMPOSER EXECUTABLE
+    file:
+      path: ~/.Tools/Composer/composer
+      mode: a+x
+      state: file
+    tags: admin.composer
+  become: true
+  become_user: "{{ composer_user }}"
+
+- block:
+  - command: php -v
+    name: LS
+    register: php_version_sudo
+
+  - name: INSTALLING DEPENDENCIES FOR LARAVEL
+    yum:
+      name: php72-php-pecl-zip
+      state: latest
+    when: php_version_sudo|succeeded
+
+  - block:
+    - command: php -v
+      name: LS
+      register: php_version_user
+
+    - name: INSTALLING LARAVEL FOR USER ONLY
+      shell: composer global require "laravel/installer"
+      when: php_version_user|succeeded
+
+    - name: INCLUDING COMPOSER PATH
+      lineinfile:
+        dest: ~/.bashrc
+        line: 'export PATH="$PATH:$HOME/.config/composer/vendor/bin"'
+      when: php_version_user|succeeded
+
+    - name: RELOADING BASHRC
+      become: no
+      action: shell source ~/.bashrc
+      when: php_version_user|succeeded
+    become: true
+    become_user: "{{ composer_user }}"
+  when: Install_Laravel
